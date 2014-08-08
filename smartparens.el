@@ -7672,6 +7672,42 @@ support custom pairs."
             (sp-show--pair-enc-function ok)))
       (execute-kbd-macro cmd))))
 
+(defun sp-copy-adjacent-sexp)
+
+(defun sp-opening-action ()
+  (setq match (match-string 0))
+  ;; we can use `sp-get-thing' here because we *are* at some
+  ;; pair opening, and so only the tag or the sexp can trigger.
+  (setq ok (sp-get-thing))
+  (if ok
+      (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
+    (sp-show--pair-create-mismatch-overlay (point) (length match)))))
+
+(defun sp-closing-action ()
+  (setq match (match-string 0))
+  (setq ok (sp-get-thing t))
+  (if ok
+      (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
+    (sp-show--pair-create-mismatch-overlay (- (point) (length match))
+					   (length match))))
+
+(defun sp-test-opening ()
+  (or (and (memq major-mode sp-navigate-consider-stringlike-sexp)
+	   (looking-at (sp--get-stringlike-regexp)))
+      (and (memq major-mode sp-navigate-consider-sgml-tags)
+	   (looking-at "<"))))
+
+(defun sp-test-closing ()
+  (or
+   (and (memq major-mode sp-navigate-consider-stringlike-sexp)
+	(sp--looking-back (sp--get-stringlike-regexp)))
+   (and (memq major-mode sp-navigate-consider-sgml-tags)
+	(sp--looking-back ">"))))
+
+(defun sp-get-adjacent-sexp)
+;; abstract from sp-show--pair-function
+;; use in both higlights and copy command
+
 (defun sp-show--pair-function ()
   "Display the show pair overlays."
   (when show-smartparens-mode
@@ -7683,28 +7719,11 @@ support custom pairs."
              ok match)
         (cond
          ((or (sp--looking-at (if sp-show-pair-from-inside allowed opening))
-              (and (memq major-mode sp-navigate-consider-stringlike-sexp)
-                   (looking-at (sp--get-stringlike-regexp)))
-              (and (memq major-mode sp-navigate-consider-sgml-tags)
-                   (looking-at "<")))
-          (setq match (match-string 0))
-          ;; we can use `sp-get-thing' here because we *are* at some
-          ;; pair opening, and so only the tag or the sexp can trigger.
-          (setq ok (sp-get-thing))
-          (if ok
-              (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
-            (sp-show--pair-create-mismatch-overlay (point) (length match))))
+              (sp-test-opening))
+	  (sp-opening-action))
          ((or (sp--looking-back (if sp-show-pair-from-inside allowed closing))
-              (and (memq major-mode sp-navigate-consider-stringlike-sexp)
-                   (sp--looking-back (sp--get-stringlike-regexp)))
-              (and (memq major-mode sp-navigate-consider-sgml-tags)
-                   (sp--looking-back ">")))
-          (setq match (match-string 0))
-          (setq ok (sp-get-thing t))
-          (if ok
-              (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
-            (sp-show--pair-create-mismatch-overlay (- (point) (length match))
-                                                   (length match))))
+              (sp-test-closing))
+          (sp-closing-action))
          (sp-show-pair-overlays
           (sp-show--pair-delete-overlays)))))))
 

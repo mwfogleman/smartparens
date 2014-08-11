@@ -7675,7 +7675,9 @@ support custom pairs."
 (defun sp-copy-adjacent-sexp)
 
 (defun sp-test-opening ()
-  (or (sp--looking-at (if sp-show-pair-from-inside allowed opening))
+  (or (sp--looking-at (if sp-show-pair-from-inside
+			  (and sp-show-pair-from-inside (sp--get-allowed-regexp))
+			(sp--get-opening-regexp (sp--get-allowed-pair-list))))
       (and (memq major-mode sp-navigate-consider-stringlike-sexp)
 	   (looking-at (sp--get-stringlike-regexp)))
       (and (memq major-mode sp-navigate-consider-sgml-tags)
@@ -7683,11 +7685,13 @@ support custom pairs."
 
 (defun sp-test-closing ()
   (or
-   (sp--looking-back (if sp-show-pair-from-inside allowed closing))
+   (sp--looking-back (if sp-show-pair-from-inside
+			 (and sp-show-pair-from-inside (sp--get-allowed-regexp))
+		       (sp--get-closing-regexp (sp--get-allowed-pair-list))))
    (and (memq major-mode sp-navigate-consider-stringlike-sexp)
 	(sp--looking-back (sp--get-stringlike-regexp)))
    (and (memq major-mode sp-navigate-consider-sgml-tags)
-	(sp--looking-back ">")))
+	(sp--looking-back ">"))))
   
 (defun sp-get-adjacent-sexp)
 ;; abstract from sp-show--pair-function
@@ -7697,11 +7701,7 @@ support custom pairs."
   "Display the show pair overlays."
   (when show-smartparens-mode
     (save-match-data
-      (let* ((pair-list (sp--get-allowed-pair-list))
-             (opening (sp--get-opening-regexp pair-list))
-             (closing (sp--get-closing-regexp pair-list))
-             (allowed (and sp-show-pair-from-inside (sp--get-allowed-regexp)))
-             ok match)
+      (let* (ok match)
         (cond
          ((sp-test-opening)
 	  (setq match (match-string 0))

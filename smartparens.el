@@ -7674,23 +7674,6 @@ support custom pairs."
 
 (defun sp-copy-adjacent-sexp)
 
-(defun sp-opening-action ()
-  (setq match (match-string 0))
-  ;; we can use `sp-get-thing' here because we *are* at some
-  ;; pair opening, and so only the tag or the sexp can trigger.
-  (setq ok (sp-get-thing))
-  (if ok
-      (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
-    (sp-show--pair-create-mismatch-overlay (point) (length match)))))
-
-(defun sp-closing-action ()
-  (setq match (match-string 0))
-  (setq ok (sp-get-thing t))
-  (if ok
-      (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
-    (sp-show--pair-create-mismatch-overlay (- (point) (length match))
-					   (length match))))
-
 (defun sp-test-opening ()
   (or (sp--looking-at (if sp-show-pair-from-inside allowed opening))
       (and (memq major-mode sp-navigate-consider-stringlike-sexp)
@@ -7721,9 +7704,20 @@ support custom pairs."
              ok match)
         (cond
          ((sp-test-opening)
-	 (sp-opening-action))
+	  (setq match (match-string 0))
+	  ;; we can use `sp-get-thing' here because we *are* at some
+	  ;; pair opening, and so only the tag or the sexp can trigger.
+	  (setq ok (sp-get-thing))
+	  (if ok
+	      (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
+	    (sp-show--pair-create-mismatch-overlay (point) (length match))))
 	 ((sp-test-closing)
-          (sp-closing-action))
+	  (setq match (match-string 0))
+	  (setq ok (sp-get-thing t))
+	  (if ok
+	      (sp-get ok (sp-show--pair-create-overlays :beg :end :op-l :cl-l))
+	    (sp-show--pair-create-mismatch-overlay (- (point) (length match))
+						   (length match))))
          (sp-show-pair-overlays
           (sp-show--pair-delete-overlays)))))))
 

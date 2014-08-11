@@ -7672,7 +7672,19 @@ support custom pairs."
             (sp-show--pair-enc-function ok)))
       (execute-kbd-macro cmd))))
 
-(defun sp-copy-adjacent-sexp)
+(defun sp-copy-adjacent-sexp ()
+  (interactive)
+  (cond ((sp-test-opening)
+	 (sp-copy-sexp 1))
+	((sp-test-closing)
+	 (sp-copy-sexp -1))))
+
+(defun sp-kill-adjacent-sexp ()
+  (interactive)
+  (cond ((sp-test-opening)
+	 (sp-kill-sexp 1))
+	((sp-test-closing)
+	 (sp-kill-sexp -1))))
 
 (defun sp-test-opening ()
   (or (sp--looking-at (if sp-show-pair-from-inside

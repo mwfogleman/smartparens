@@ -7692,18 +7692,20 @@ support custom pairs."
 					   (length match))))
 
 (defun sp-test-opening ()
-  (or (and (memq major-mode sp-navigate-consider-stringlike-sexp)
+  (or (sp--looking-at (if sp-show-pair-from-inside allowed opening))
+      (and (memq major-mode sp-navigate-consider-stringlike-sexp)
 	   (looking-at (sp--get-stringlike-regexp)))
       (and (memq major-mode sp-navigate-consider-sgml-tags)
 	   (looking-at "<"))))
 
 (defun sp-test-closing ()
   (or
+   (sp--looking-back (if sp-show-pair-from-inside allowed closing))
    (and (memq major-mode sp-navigate-consider-stringlike-sexp)
 	(sp--looking-back (sp--get-stringlike-regexp)))
    (and (memq major-mode sp-navigate-consider-sgml-tags)
-	(sp--looking-back ">"))))
-
+	(sp--looking-back ">")))
+  
 (defun sp-get-adjacent-sexp)
 ;; abstract from sp-show--pair-function
 ;; use in both higlights and copy command
@@ -7718,11 +7720,9 @@ support custom pairs."
              (allowed (and sp-show-pair-from-inside (sp--get-allowed-regexp)))
              ok match)
         (cond
-         ((or (sp--looking-at (if sp-show-pair-from-inside allowed opening))
-              (sp-test-opening))
-	  (sp-opening-action))
-         ((or (sp--looking-back (if sp-show-pair-from-inside allowed closing))
-              (sp-test-closing))
+         ((sp-test-opening)
+	 (sp-opening-action))
+	 ((sp-test-closing)
           (sp-closing-action))
          (sp-show-pair-overlays
           (sp-show--pair-delete-overlays)))))))
